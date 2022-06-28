@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/dataset-license/portal-backend/src/models"
 	service "github.com/dataset-license/portal-backend/src/services"
@@ -88,4 +90,24 @@ func (a *BasicInfo) SetLicense(c *gin.Context) {
 		a.JsonSuccess(c, http.StatusOK, res)
 	}
 
+}
+func (a *BasicInfo) GetDatalicenseBySomeConditions(c *gin.Context) {
+	token := c.Query("token")
+	condition := models.Datalicense{}
+	err := c.BindJSON(&condition)
+	if err != nil {
+		a.JsonFail(c, http.StatusBadRequest, "Unmarshal JSON failed")
+	}
+	t := reflect.TypeOf(condition)
+	v := reflect.ValueOf(condition)
+	for k := 0; k < t.NumField(); k++ {
+		if v.Field(k).Interface() != nil {
+			fmt.Println("name:", fmt.Sprintf("%+v", t.Field(k).Name),
+				", value:", fmt.Sprintf("%v", v.Field(k).Interface()),
+				", json: ", t.Field(k).Tag.Get("json"))
+		}
+	}
+	p := utils.NewPagination(c)
+	res := service.GetDataLicenseBySomeConditions(c, p, token, condition)
+	a.JsonSuccess(c, http.StatusOK, res)
 }
